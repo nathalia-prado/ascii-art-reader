@@ -1,5 +1,6 @@
 import prompt from 'prompt'
 import * as fsPromises from 'node:fs/promises'
+import { read } from 'node:fs'
 
 prompt.message = ''
 prompt.delimiter = ': '
@@ -15,10 +16,47 @@ async function main() {
   displayMessage()
   // const listOfOptions = ['kea.txt', 'kiwi.txt', 'manaia.txt', 'nikau.txt', 'pohutukawa.txt']
   const listOfOptions = await listDir('./data')  
-  choice.message = listOfOptions
-  const result = await prompt.get(choice)
-  const option = listOfOptions[result.choice]
-  console.log(await  readText('./data/' + option))
+  choice.message = listOfOptions.map((element, index) => index + ' - ' + element)
+  for (;;) {
+    const input = await prompt.get(choice) 
+    switch (input.choice) {
+        case 'c': {
+            const inputComment = await displayCommentOption()
+            writeText('comment.txt', inputComment)
+            break
+        }
+        case 'q': {
+            console.log('See you soon')
+            prompt.stop()
+            return
+        }        
+        case 'v': {
+            console.log('See your comments')
+            const comments = await readText('comment.txt')
+            console.log(comments)
+            break
+        }
+        default: {
+            const option = listOfOptions[input.choice]
+            console.log(await  readText('./data/' + option))
+            break
+        }
+    }
+  }
+}
+
+async function displayCommentOption() {
+    try {
+      const comment = {
+        name: 'comment',
+        hidden: false,
+        message: '\nType your comment',
+      }
+      const input = await prompt.get(comment)
+      return input.comment
+    } catch (e) {
+        console.error(e.message)
+    }
 }
 
 function welcomeMessage() {
@@ -26,7 +64,7 @@ function welcomeMessage() {
 }
 
 function displayMessage() {
-    console.log('Make your choice')  
+    console.log("Choose an artwork to display, or: \n  'c' to comment\n  'q' to quit \n  'v' to see your comments")  
 }
 
 // read the file content
